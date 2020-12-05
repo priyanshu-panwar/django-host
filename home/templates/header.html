@@ -1,0 +1,250 @@
+{% load static %}
+{% load i18n %}
+{% load currency %}
+<header>
+    <!-- top Header -->
+    <div id="top-header">
+        <div class="container">
+            <div class="{% if '/ar/' in request.path %} pull-right {% else %} pull-left {% endif %}">
+                <span>{% trans "Welcome to E-shop!" %}</span>
+                {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{message.tags}}" role="alert">
+                    {{ message |safe }}
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+            <div class="{% if '/ar/' in request.path %} pull-left {% else %} pull-right {% endif %}">
+                <ul class="header-top-links">
+                    <li><a href="#">{% trans "Store" %}</a></li>
+                    <li><a href="#">{% trans "Newsletter" %}</a></li>
+                    <li><a href="{% url 'faq' %}">{% trans "FAQ" %}</a></li>
+                    <li class="dropdown default-dropdown">
+
+                        <select name="language" onchange="changeURL()" id="id_lang">
+                            {% get_current_language as LANGUAGE_CODE %}
+                            {% get_available_languages as LANGUAGES %}
+                            {% get_language_info_list for LANGUAGES as languages %}
+                            {% for language in languages %}
+                            <option value="{{ language.code }}" {% if language.code == LANGUAGE_CODE %}
+                                selected{% endif %}>
+                                {{ language.name_local }} ({{ language.code }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </li>
+
+                    <li class="dropdown default-dropdown">
+                        <form id="currency_switcher" method="POST" action="{% url 'selectcurrency' %}">
+                            {% csrf_token %}
+                            <select name="currency" onchange="submit()" id="id_currency">
+                                {% for curr in CURRENCIES %}
+                                <option value="{{ curr.code }}"
+                                    {% ifequal curr.code request.session.currency %}selected="selected"
+                                    {% endifequal %}>
+                                    {{ curr.symbol }} {{ curr.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+
+                            <noscript>
+                                <input type="submit" value="Set" />
+                            </noscript>
+
+                        </form>
+                    </li>
+
+                    <li class="dropdown default-dropdown">
+                        <form id="currency_switcher" method="POST" action="{% url 'savelangcur' %}">
+                            {% csrf_token %}
+                            <input type="submit" value="Save" />
+                        </form>
+                    </li>
+
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- header -->
+    <div id="header">
+        <div class="container">
+            <div class="{% if '/ar/' in request.path %} pull-right {% else %} pull-left {% endif %}">
+                <!-- Logo -->
+                <div class="header-logo">
+                    <a class="logo" href="{% url 'home' %}">
+                        <img src="{% static '' %}img/logo.png" alt="">
+                    </a>
+                </div>
+                <!-- /Logo -->
+                <script>
+                    $(function () {
+                        if (window.location.href.includes('/ar/')) {
+                            $("#query").autocomplete({
+                                source: "/ar/search_auto_ar/",
+                                select: function (event, ui) { //item selected
+                                    AutoCompleteSelectHandler(event, ui)
+                                },
+                                minLength: 2,
+                            });
+                        }
+                        else {
+                            $("#query").autocomplete({
+                                source: "/search_auto/",
+                                select: function (event, ui) { //item selected
+                                    AutoCompleteSelectHandler(event, ui)
+                                    console.log(AutoCompleteSelectHandler(event, ui))
+                                },
+                                minLength: 2,
+                            });
+                        }
+                    });
+                    function AutoCompleteSelectHandler(event, ui) {
+                        var selectedObj = ui.item;
+                    }
+                </script>
+
+                <!-- Search -->
+                <div class="header-search">
+                    {% if '/ar/' in request.path %}
+                    <form action="/ar/search/" method="post">
+                        {% csrf_token %}
+                        <select name="catid" class="input search-categories" style="position: relative; height: 40px;">
+                            <option value="0">{% trans "All Categories" %}</option>
+                        </select>
+                        <!-- <input id="query" name="query" class="input search-input" type="text"
+                            placeholder="Enter your keyword"> -->
+                        <input id="query" name="query" type="text" placeholder="Enter keyword">
+
+                        <button class="search-btn"><i class="fa fa-search"></i></button>
+                    </form>
+                    {% else %}
+                    <form action="/en/search/" method="post">
+                        {% csrf_token %}
+                        <select name="catid" class="input search-categories" style="position: relative; height: 40px;">
+                            <option value="0">{% trans "All Categories" %}</option>
+                        </select>
+                        <!-- <input id="query" name="query" class="input search-input" type="text"
+                            placeholder="Enter your keyword"> -->
+                        <input id="query" name="query" type="text" placeholder="Enter keyword">
+
+                        <button class="search-btn"><i class="fa fa-search"></i></button>
+                    </form>
+                    {% endif %}
+                </div>
+                <!-- /Search -->
+
+            </div>
+            <div class="{% if '/ar/' in request.path %} pull-left {% else %} pull-right {% endif %}">
+                <ul class="header-btns">
+                    <!-- Account -->
+                    <li class="header-account dropdown default-dropdown">
+                        {% if user.id is not None %}
+                        <div class="dropdown-toggle" role="button" data-toggle="dropdown" aria-expanded="true">
+                            <div class="header-btns-icon">
+                                <img src="{{ request.session.userimage }}" style="height: 40px; border-radius: 30%">
+                            </div>
+                            <strong class="text-uppercase">{{ user.first_name }} <i
+                                    class="fa fa-caret-down"></i></strong>
+                        </div>
+                        {% else %}
+                        <a href="{% url 'login' %}" class="text-uppercase">Login</a> / <a href="{% url 'signup' %}"
+                            class="text-uppercase">Sign Up</a>
+                        {% endif %}
+
+                        <ul class="custom-menu">
+                            <li><a href="{% url 'user_index' %}"><i class="fa fa-user-o"></i>
+                                    {% trans "My Account" %}</a></li>
+                            <li><a href="#"><i class="fa fa-heart-o"></i> {% trans "My Favorits" %}</a></li>
+                            <li><a href="{% url 'user_orders' %}"><i class="fa fa-exchange"></i>
+                                    {% trans "My Orders " %}</a></li>
+                            <li><a href="{% url 'user_comments' %}"><i class="fa fa-check"></i>
+                                    {% trans "My Comments" %}</a></li>
+                            <li><a href="{% url 'logout' %}"><i class="fa fa-unlock-alt"></i> {% trans "Logout" %}</a>
+                            </li>
+
+                        </ul>
+                    </li>
+                    <!-- /Account -->
+
+                    <!-- Cart -->
+                    <li class="header-cart dropdown default-dropdown">
+                        <a href="{% url 'shopcart'%}">
+                            <div class="header-btns-icon">
+                                <i class="fa fa-shopping-cart"></i>
+                                {% load myapptags %}
+                                {% shopcartcount user.id as count %}
+
+                                <span class="qty">{{ count }}</span>
+                            </div>
+                            <strong class="text-uppercase">{% trans "My Cart:" %}</strong>
+                            <br>
+
+                        </a>
+
+                    </li>
+                    <!-- /Cart -->
+
+                    <!-- Mobile nav toggle-->
+                    <li class="nav-toggle">
+                        <button class="nav-toggle-btn main-btn icon-btn"><i class="fa fa-bars"></i></button>
+                    </li>
+                    <!-- / Mobile nav toggle -->
+                </ul>
+            </div>
+        </div>
+        <!-- header -->
+    </div>
+    <!-- container -->
+</header>
+<!-- /HEADER -->
+
+<script>
+    function changeURL() {
+
+        var current_location = window.location.href
+
+        if (window.location.href.includes('/ar/')) {
+
+            var redirect_url = window.location.href.split('/ar/')[1]
+
+            window.location.href = "http://localhost:8000/en/" + redirect_url
+
+        }
+
+        else if (window.location.href.includes('/en/')) {
+
+            var redirect_url = window.location.href.split('/en/')[1]
+
+            window.location.href = "http://localhost:8000/ar/" + redirect_url
+        }
+
+        else {
+
+            var redirect_url = window.location.href.split('8000/')[1]
+
+            window.location.href = "http://localhost:8000/" + $("#id_lang").val() + "/" + redirect_url
+
+        }
+
+        // else {
+        //     window.location.replace('http//localhost:8000/' + current_location.split('/')[1])
+        // }
+
+        // var locate = window.location.href.split("8000/")
+
+        // var redirect_url = locate[1]
+
+        // if (locate[1].includes("ar")) {
+        //     window.location.replace("http://localhost:8000/en/" + locate[1].split("ar/")[1]);
+        // }
+
+        // else if (locate[1].includes("en")) {
+        //     window.location.replace("http://localhost:8000/ar/" + locate[1].split("en/")[1]);
+        // }
+        // else {
+        //     window.location.replace("http://localhost:8000/ar/" + redirect_url);
+        // }
+    }
+</script>
